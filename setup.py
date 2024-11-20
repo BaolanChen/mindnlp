@@ -24,10 +24,10 @@ from setuptools import setup
 from setuptools.command.egg_info import egg_info
 from setuptools.command.build_py import build_py
 
-version = '0.1.1'
+
+version = '0.4.1'
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 pkg_dir = os.path.join(cur_dir, 'build')
-
 
 def clean():
     # pylint: disable=unused-argument
@@ -110,15 +110,26 @@ setup(
     license='Apache 2.0',
     packages=find_packages(exclude=("example")),
     include_package_data=True,
+    package_data={"": ["**/*.cu", "**/*.cpp", "**/*.cuh", "**/*.h", "**/*.pyx"]},
     cmdclass={
         'egg_info': EggInfo,
         'build_py': BuildPy,
     },
     install_requires=[
+        'mindspore>=2.2.14',
         'tqdm',
         'requests',
-        'datasets',
-        'tokenizers'
+        'datasets', # hf dependency
+        'evaluate', # hf dependency
+        'tokenizers==0.19.1', # hf dependency
+        'safetensors', # hf dependency
+        'sentencepiece',
+        'regex',
+        'addict',
+        'ml_dtypes',
+        'pyctcdecode',
+        'pytest==7.2.0',
+        'pillow>=10.0.0'
     ],
     classifiers=[
         'License :: OSI Approved :: Apache Software License'

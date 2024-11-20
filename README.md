@@ -18,25 +18,80 @@
     </a>
 </p>
 
-[Introduction](#introduction) |
-[Quick Links](#quick-links) |
-[Installation](#installation) |
-[Get Started](#get-started) |
-[Tutorials](#tutorials) |
-[Notes](#notes)
+## Table of Contents
+
+- [ MindNLP](#-mindnlp)
+  - [Table of Contents](#table-of-contents)
+  - [News 📢](#news-)
+  - [Installation](#installation)
+      - [Install from Pypi](#install-from-pypi)
+      - [Daily build](#daily-build)
+      - [Install from source](#install-from-source)
+      - [Version Compatibility](#version-compatibility)
+  - [Introduction](#introduction)
+      - [Major Features](#major-features)
+  - [Supported models](#supported-models)
+  - [License](#license)
+  - [Feedbacks and Contact](#feedbacks-and-contact)
+  - [MindSpore NLP SIG](#mindspore-nlp-sig)
+  - [Acknowledgement](#acknowledgement)
+  - [Citation](#citation)
 
 ## News 📢
 
 * 🔥 **Latest Features**
-  * 📃 Support PreTrained Models, including **[BERT](./mindnlp/models/bert)**, **[Roberta](./mindnlp/models/roberta)**, **[GPT2](./mindnlp/models/gpt2)** and **[T5](./mindnlp/models/t5)**.
-    You can use them by following code snippet:
+
+  * 🤗 **250+** Pretrained models support ***huggingface transformers-like apis***.
+    You can use them easily by following code snippet:
     ```python
-    from mindnlp.models import BertModel
+    from mindnlp.transformers import AutoModel
 
-    model = BertModel.from_pretrained('bert-base-cased')
+    model = AutoModel.from_pretrained('bert-base-cased')
     ```
+  * **Full Platform Support**: Comprehensive support for `Ascend 910 series`, `Ascend 310B (Orange Pi)`, `GPU`, and `CPU`. (Note: Currently the only AI development kit available on Orange Pi.)
+  * **Distributed Parallel Inference**: Multi-device, multi-process parallel inference support for models exceeding 10B parameters.
+  * **Quantization Algorithm Support**: SmoothQuant available for Orange Pi; bitsandbytes-like int8 quantization supported on GPU.
+  * **Sentence Transformer Support**: Enables efficient RAG (Retrieval-Augmented Generation) development.
+  * **Dynamic Graph Performance Optimization**: Achieves PyTorch+GPU-level inference speeds for dynamic graphs on Ascend hardware (tested Llama performance at **85ms/token**).
+  * **True Static and Dynamic Graph Unification**: One-line switching to graph mode with `mindspore.jit`, fully compatible with ***Hugging Face code style*** for both ease of use and rapid performance improvement. Tested Llama performance on Ascend hardware reaches 2x dynamic graph speed (**45ms/token**), consistent with other MindSpore static graph-based suites.
+  * **Extensive LLM Application Updates**: Includes `Text information extraction`, `Chatbots`, `Speech recognition`, `ChatPDF`, `Music generation`, `Code generation`, `Voice clone`, etc. With increased model support, even more exciting applications await development!
 
 
+## Installation
+
+#### Install from Pypi
+
+You can install the official version of MindNLP which is uploaded to pypi.
+
+```bash
+pip install mindnlp
+```
+
+#### Daily build
+
+You can download MindNLP daily wheel from [here](https://repo.mindspore.cn/mindspore-lab/mindnlp/newest/any/).
+
+#### Install from source
+
+To install MindNLP from source, please run:
+
+```bash
+pip install git+https://github.com/mindspore-lab/mindnlp.git
+# or
+git clone https://github.com/mindspore-lab/mindnlp.git
+cd mindnlp
+bash scripts/build_and_reinstall.sh
+```
+
+#### Version Compatibility
+
+| MindNLP version | MindSpore version | Supported Python version |
+|-----------------|-------------------|--------------------------|
+| master          | daily build       | >=3.7.5, <=3.9           |
+| 0.1.1           | >=1.8.1, <=2.0.0  | >=3.7.5, <=3.9           |
+| 0.2.x           | >=2.1.0           | >=3.8, <=3.9             |
+| 0.3.x           | >=2.1.0, <=2.3.1  | >=3.8, <=3.9             |
+| 0.4.x           | >=2.2.x           | >=3.9, <=3.11            |
 
 ## Introduction
 
@@ -44,134 +99,16 @@ MindNLP is an open source NLP library based on MindSpore. It supports a platform
 
 The master branch works with **MindSpore master**.
 
-### Major Features
+#### Major Features
 
 - **Comprehensive data processing**: Several classical NLP datasets are packaged into friendly module for easy use, such as Multi30k, SQuAD, CoNLL, etc.
 - **Friendly NLP model toolset**: MindNLP provides various configurable components. It is friendly to customize models using MindNLP.
-- **Easy-to-use engine**: MindNLP simplified complicated training process in MindSpore. It supports Trainer and Evaluator interfaces to train and evaluate models easily.
+- **Easy-to-use engine**: MindNLP simplified the complicated training process in MindSpore. It supports Trainer and Evaluator interfaces to train and evaluate models easily.
 
-## Quick Links
 
-- [Documentation](https://mindnlp.cqu.ai/en/latest/)
-- [Examples](https://github.com/mindspore-ecosystem/mindnlp/tree/master/examples)
-- ...
+## Supported models
 
-## Installation
-
-### Dependency
-
-- mindspore >= 1.8.1
-
-### Install from source
-
-To install MindNLP from source, please run:
-
-```bash
-pip install git+https://github.com/mindspore-ecosystem/mindnlp.git
-```
-
-## Get Started
-
-We will next quickly implement a sentiment classification task by using mindnlp.
-
-### Define Model
-
-```python
-import math
-from mindspore import nn
-from mindspore import ops
-from mindspore.common.initializer import Uniform, HeUniform
-from mindnlp.abc import Seq2vecModel
-
-class SentimentClassification(Seq2vecModel):
-    def construct(self, text):
-        _, (hidden, _), _ = self.encoder(text)
-        context = ops.concat((hidden[-2, :, :], hidden[-1, :, :]), axis=1)
-        output = self.head(context)
-        return output
-```
-    
-### Define Hyperparameters
-The following are some of the required hyperparameters in the model training process.
-```python
-# define Models & Loss & Optimizer
-hidden_size = 256
-output_size = 1
-num_layers = 2
-bidirectional = True
-drop = 0.5
-lr = 0.001
-```
-
-### Data Preprocessing
-The dataset was downloaded and preprocessed by calling the interface of dataset in mindnlp.
-
-Load dataset:
-```python
-from mindnlp.dataset import load
-
-imdb_train, imdb_test = load('imdb', shuffle=True)
-```
-
-Initializes the vocab and tokenizer for preprocessing:
-```python
-from mindnlp.modules import Glove
-from mindnlp.transforms import BasicTokenizer
-
-embedding, vocab = Glove.from_pretrained('6B', 100, special_tokens=["<unk>", "<pad>"], dropout=drop)
-tokenizer = BasicTokenizer(True)
-```
-
-The loaded dataset is preprocessed and divided into training and validation:
-```python
-from mindnlp.dataset import process
-
-imdb_train = process('imdb', imdb_train, tokenizer=tokenizer, vocab=vocab, \
-                     bucket_boundaries=[400, 500], max_len=600, drop_remainder=True)
-imdb_test = process('imdb', imdb_test, tokenizer=tokenizer, vocab=vocab, \
-                     bucket_boundaries=[400, 500], max_len=600, drop_remainder=False)
-```
-
-### Instantiate Model
-```python
-from mindnlp.modules import RNNEncoder
-
-# build encoder
-lstm_layer = nn.LSTM(100, hidden_size, num_layers=num_layers, batch_first=True,
-                     dropout=dropout, bidirectional=bidirectional)
-encoder = RNNEncoder(embedding, lstm_layer)
-
-# build head
-head = nn.SequentialCell([
-    nn.Dropout(p=dropout),
-    nn.Sigmoid(),
-    nn.Dense(hidden_size * 2, output_size,
-             weight_init=HeUniform(math.sqrt(5)),
-             bias_init=Uniform(1 / math.sqrt(hidden_size * 2)))
-
-])
-
-# build network
-network = SentimentClassification(encoder, head)
-loss = nn.BCELoss(reduction='mean')
-optimizer = nn.Adam(network.trainable_params(), learning_rate=lr)
-```
-
-### Training Process
-Now that we have completed all the preparations, we can begin to train the model.
-```python
-from mindnlp.engine.metrics import Accuracy
-from mindnlp.engine.trainer import Trainer
-
-# define metrics
-metric = Accuracy()
-
-# define trainer
-trainer = Trainer(network=net, train_dataset=imdb_train, eval_dataset=imdb_valid, metrics=metric,
-                  epochs=5, loss_fn=loss, optimizer=optimizer)
-trainer.run(tgt_columns="label")
-print("end train")
-```
+Since there are too many supported models, please check [here](https://mindnlp.cqu.ai/supported_models)
 
 <!-- ## Tutorials
 
@@ -179,28 +116,38 @@ print("end train")
 
 <!-- ## Notes -->
 
-### License
+## License
 
 This project is released under the [Apache 2.0 license](LICENSE).
 
-### Feedbacks and Contact
+## Feedbacks and Contact
 
 The dynamic version is still under development, if you find any issue or have an idea on new features, please don't hesitate to contact us via [Github Issues](https://github.com/mindspore-lab/mindnlp/issues).
 
-### Acknowledgement
 
-MindSpore is an open source project that welcome any contribution and feedback.  
+## MindSpore NLP SIG
+
+MindSpore NLP SIG (Natural Language Processing Special Interest Group) is the main development team of the MindNLP framework. It aims to collaborate with developers from both industry and academia who are interested in research, application development, and the practical implementation of natural language processing. Our goal is to create the best NLP framework based on the domestic framework MindSpore. Additionally, we regularly hold NLP technology sharing sessions and offline events. Interested developers can join our SIG group using the QR code below.
+
+<div align="center">
+    <img src="./assets/qrcode_qq_group.jpg" width="250" />
+</div>
+
+
+## Acknowledgement
+
+MindSpore is an open source project that welcomes any contribution and feedback.  
 We wish that the toolbox and benchmark could serve the growing research  
-community by providing a flexible as well as standardized toolkit to reimplement existing methods  
+community by providing a flexible as well as standardized toolkit to re-implement existing methods  
 and develop their own new semantic segmentation methods.
 
-### Citation
+## Citation
 
 If you find this project useful in your research, please consider citing:
 
 ```latex
 @misc{mindnlp2022,
-    title={{MindNLP}: a MindSpore NLP library},
+    title={{MindNLP}: Easy-to-use and high-performance NLP and LLM framework based on MindSpore},
     author={MindNLP Contributors},
     howpublished = {\url{https://github.com/mindlab-ai/mindnlp}},
     year={2022}
